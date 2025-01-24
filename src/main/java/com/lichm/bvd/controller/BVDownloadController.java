@@ -48,15 +48,15 @@ public class BVDownloadController {
         HttpURLConnection audioOriginConn = BVDownloadHelper.getConn(audioOriginUrl);
 
         String videoFileDownloadUrl = BVDownloadHelper.BVDownload(title, videoOriginConn, ".mp4");
+        log.info("video download success");
         String audioFileDownloadUrl = BVDownloadHelper.BVDownload(title, audioOriginConn, ".mp3");
+        log.info("audio download success");
         String outputFile = System.getProperty("user.dir")+ title + ".mp4" ;
-
+        log.info("=================================merging=================================");
         String merge = BVDownloadHelper.merge(videoFileDownloadUrl, audioFileDownloadUrl, outputFile);
-
+        log.info("video merge" + merge);
+        log.info("outputFile :" + outputFile);
 
     }
-
-
-
 
 }

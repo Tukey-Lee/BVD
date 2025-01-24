@@ -96,7 +96,6 @@ public class BVDownloadHelper {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        //System.out.println(response);
         return response.toString();
     }
 
@@ -142,19 +141,13 @@ public class BVDownloadHelper {
         String url = "";
         if (matcher.find()) {
             group = matcher.group();
-            //System.out.println(group);
         }
 
         if (!Objects.equals(group, "")) {
             Gson gson = new Gson();
             JsonObject fromJson = gson.fromJson(group.replace("<script>window.__playinfo__=", "").replace("</script>", ""), JsonObject.class);
-            //System.out.println(fromJson);
 
             url = fromJson.getAsJsonObject("data").getAsJsonObject("dash").getAsJsonArray(memberName).get(0).getAsJsonObject().asMap().get("baseUrl").getAsString();
-            //String videoUrl = fromJson.getAsJsonObject("data").getAsJsonObject("dash").getAsJsonArray("video").get(0).getAsJsonObject().asMap().get("baseUrl").getAsString();
-            //String audioUrl = fromJson.getAsJsonObject("data").getAsJsonObject("dash").getAsJsonArray("audio").get(0).getAsJsonObject().asMap().get("baseUrl").getAsString();
-            //System.out.println(videoUrl);
-            //System.out.println(audioUrl);
         }
         return url;
     }
@@ -175,7 +168,6 @@ public class BVDownloadHelper {
         while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1){
             fileOutputStream.write(buffer, 0, count);
         }
-        //System.out.println("success:"+System.getProperty("user.dir")+ title +fileType);
         return System.getProperty("user.dir")+"\\"+"BVD"+title +fileType;
     }
 
@@ -196,15 +188,13 @@ public class BVDownloadHelper {
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = reader.readLine())!=null){
-            System.out.println(line);
+            log.info(line);
         }
 
         int exitCode = process.waitFor();
         if (exitCode == 0){
-            //System.out.println("success");
             return "success";
         }else {
-            //System.out.println("fail");
             return "fail";
         }
     }
