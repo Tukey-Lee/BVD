@@ -27,7 +27,7 @@ public class BVDownloadHelper {
      * @param spec
      * @return HttpURLConnection
      */
-    public static HttpURLConnection getConn(String spec){
+    public static HttpURLConnection getConn(String spec) {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(spec);
@@ -154,25 +154,31 @@ public class BVDownloadHelper {
 
     /**
      * 下载
+     *
      * @param title
      * @param videoOriginConn
      * @param fileType
      * @return
      * @throws IOException
      */
-    public static String BVDownload(String title, HttpURLConnection videoOriginConn, String fileType) throws IOException {
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(videoOriginConn.getInputStream());
-        FileOutputStream fileOutputStream = new FileOutputStream(System.getProperty("user.dir")+"\\"+"BVD"+ title +fileType);
-        byte[] buffer = new byte[1024];
-        int count = 0;
-        while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1){
-            fileOutputStream.write(buffer, 0, count);
+    public static String BVDownload(String title, HttpURLConnection videoOriginConn, String fileType) {
+        try {
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(videoOriginConn.getInputStream());
+            FileOutputStream fileOutputStream = new FileOutputStream(System.getProperty("user.dir") + "\\" + "BVD" + title + fileType);
+            byte[] buffer = new byte[1024];
+            int count = 0;
+            while ((count = bufferedInputStream.read(buffer, 0, 1024)) != -1) {
+                fileOutputStream.write(buffer, 0, count);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return System.getProperty("user.dir")+"\\"+"BVD"+title +fileType;
+        return System.getProperty("user.dir") + "\\" + "BVD" + title + fileType;
     }
 
     /**
      * 合并
+     *
      * @param videoFileDownloadUrl
      * @param audioFileDownloadUrl
      * @param outputFile
@@ -180,22 +186,35 @@ public class BVDownloadHelper {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static String merge(String videoFileDownloadUrl, String audioFileDownloadUrl, String outputFile) throws IOException, InterruptedException {
+    public static String merge(String videoFileDownloadUrl, String audioFileDownloadUrl, String outputFile){
+        // FFmpeg 合并音视频命令
         String command = String.format("ffmpeg -i %s -i %s -c:v copy -c:a aac -strict experimental %s", videoFileDownloadUrl, audioFileDownloadUrl, outputFile);
+        Process process = null;
+        int exitCode = 0;
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command.split(" "));
-        Process process = processBuilder.start();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        while ((line = reader.readLine())!=null){
-            log.info(line);
-        }
+        try {
+            //创建processBuilder
+            ProcessBuilder processBuilder = new ProcessBuilder(command.split(" "));
+            processBuilder.redirectErrorStream(true);//将标准错误流合并到标准输出流
 
-        int exitCode = process.waitFor();
-        if (exitCode == 0){
-            return "success";
-        }else {
-            return "fail";
+            //启动进程
+            process = processBuilder.start();
+            //读取FFmpeg输出
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // 解析进度信息
+                if (line.contains("time=")) {
+                    String time = line.substring(line.indexOf("time=") + 5, line.indexOf(" bitrate="));
+                    log.info("当前处理时间：" + time);
+                }
+            }
+            //等待进程结束
+            exitCode = process.waitFor();
+            log.info("FFmpeg 进程结束，退出码：" + exitCode);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
+        return String.valueOf(exitCode);
     }
 }
